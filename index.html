@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>MERCÊS ESTOQUE | Gestão e Inventário em Tempo Real</title>
+  <link rel="icon" type="image/png" href="logo.png?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Exo+2:ital,wght@1,800;1,900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'], mono: ['"JetBrains Mono"', 'monospace'] },
+          colors: {
+            dark: { 950: '#050506', 900: '#0a0a0d', 850: '#101014', 800: '#15151b', 700: '#202028', 600: '#30303c' },
+            merces: { red: '#e11d48', crimson: '#be123c' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg-img: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop');
+      --red-glow: 0 0 15px rgba(225, 29, 72, 0.4);
+      --border-glow: inset 0 0 10px rgba(225, 29, 72, 0.1), 0 0 10px rgba(225, 29, 72, 0.1);
+    }
+    body { background: #050506; -webkit-tap-highlight-color: transparent; }
+    .painel { background: linear-gradient(180deg, rgba(20, 20, 26, 0.9), rgba(10, 10, 14, 0.95)); border: 1px solid rgba(225, 29, 72, 0.3); border-radius: 0.75rem; box-shadow: var(--border-glow); position: relative; overflow: hidden; }
+    .side-btn { display:flex; align-items:center; gap:.75rem; width:100%; padding:.7rem 1rem; border-radius:.5rem; color:#cbd5e1; font-weight:600; font-size:.9rem; white-space:nowrap; transition:.15s; border-left: 3px solid transparent; }
+    .side-btn:hover { background:rgba(225,29,72,.1); color:#fff; }
+    .side-btn.ativo { background:linear-gradient(90deg, rgba(225,29,72,.2), transparent); color:#fff; border-left-color: #e11d48; box-shadow: inset 20px 0 20px -20px rgba(225,29,72,0.5); }
+    .hero { background:#050506; border-bottom:1px solid rgba(225,29,72,.3); position: relative; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #050506 0%, rgba(5,5,6,0.7) 40%, transparent 100%), var(--bg-img); background-size: cover; background-position: center; opacity: 0.6; z-index: 0; }
+    .hero-content { position: relative; z-index: 10; }
+    .titulo-prata { font-family:'Exo 2',sans-serif; font-style:italic; font-weight:900; line-height:.95; background:linear-gradient(180deg,#fff 30%,#9ca3af); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 4px 10px rgba(0,0,0,.8)); }
+    .titulo-vermelho { font-family:'Exo 2',sans-serif; font-style:italic; font-weight:900; line-height:1; background:linear-gradient(180deg,#ff5468,#b91c1c); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 12px rgba(225,29,72,.55)); }
+    .ic { display:inline-flex; align-items:center; vertical-align:-.18em; margin-right:.35em; }
+    .ic svg { width:1.15em; height:1.15em; }
+    .side-btn .ic, .acao .ic { margin:0; }
+    .side-btn .ic { font-size:1.35rem; }
+    .acao { border-radius:.5rem; padding:1rem .5rem; text-align:center; font-weight:700; font-size:.8rem; line-height:1.2; transition:.15s; border:1px solid rgba(255,255,255,.05); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    .acao:hover { transform:translateY(-2px); filter:brightness(1.2); }
+    .acao span { display:block; font-size:2rem; margin-bottom:.3rem; }
+    .sparkline-svg { width: 100%; height: 40px; filter: drop-shadow(0 0 8px currentColor); }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #050506; }
+    ::-webkit-scrollbar-thumb { background: #30303c; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #e11d48; }
+    @media print { aside, #hero, #topbar, #banner, #aba-inicio, #aba-supervisor, #aba-config, #barra-status { display:none !important; } body { display:block !important; } }
+    @keyframes glowNovaLinha { 0% { background-color: rgba(225, 29, 72, 0.3); } 100% { background-color: transparent; } }
+    .linha-animada { animation: glowNovaLinha 2s ease-out; }
+    @media (max-width: 640px) {
+      body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+      .hide-scroll::-webkit-scrollbar { display: none; }
+      .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    }
+    /* === MODO SMART TV === */
+    body.modo-tv #sidebar, body.modo-tv #hero, body.modo-tv #barra-status { display: none !important; }
+    body.modo-tv main { max-width: 100% !important; padding: 1.25rem 2rem !important; height: 100vh !important; overflow: hidden !important; }
+    body.modo-tv #aba-monitor { height: 100% !important; }
+    body.modo-tv #tv-header { display: flex !important; }
+    body.modo-tv #tabela-monitor td { padding-top: 1rem !important; padding-bottom: 1rem !important; font-size: 1.15rem !important; }
+    body.modo-tv #mon-total-pecas, body.modo-tv #mon-total-lancamentos { font-size: 4rem !important; line-height: 1 !important; }
+    body.modo-tv #container-tabela-monitor { max-height: none !important; height: 100% !important; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen flex flex-col lg:flex-row font-sans selection:bg-merces-red selection:text-white">
+
+  <aside id="sidebar" class="lg:w-[260px] shrink-0 lg:h-screen lg:sticky lg:top-0 flex flex-col bg-[#08080a] border-b lg:border-b-0 lg:border-r border-red-900/30 z-40 no-print">
+    <div class="flex lg:flex-col items-center gap-3 p-4 lg:pt-8 lg:pb-6 border-b border-red-900/20">
+      <div class="relative">
+        <div class="absolute inset-0 bg-red-600 blur-xl opacity-20 rounded-full"></div>
+        <img src="logo.png?v=2" alt="Mercês" class="w-14 h-14 lg:w-32 lg:h-32 object-contain relative z-10 drop-shadow-[0_0_15px_rgba(225,29,72,0.6)]">
+      </div>
+      <div class="lg:text-center mt-2">
+        <h1 style="font-family:'Exo 2',sans-serif" class="text-xl lg:text-3xl font-black italic text-white leading-none tracking-wider">MERCÊS</h1>
+        <p style="font-family:'Exo 2',sans-serif" class="text-[10px] lg:text-sm font-black italic text-merces-red leading-tight tracking-widest mt-1">EMPREENDIMENTOS</p>
+        <p class="hidden lg:block text-[10px] text-slate-400 mt-1 italic">Soluções em Movimento</p>
+      </div>
+    </div>
+    
+    <nav class="flex lg:flex-col gap-1 px-3 py-3 lg:py-4 overflow-x-auto hide-scroll whitespace-nowrap flex-1">
+      <button onclick="mudarAba('inicio')" id="tab-inicio" class="side-btn ativo shrink-0"><i data-ic="home" class="ic"></i> Início</button>
+      <button onclick="mudarAba('lancamento')" id="tab-lancamento" class="side-btn shrink-0"><i data-ic="plus-square" class="ic"></i> Entrada</button>
+      <button onclick="abrirModalRetirada()" id="btn-abrir-retirada" class="side-btn shrink-0"><i data-ic="box" class="ic"></i> Retirada / Baixa</button>
+      <button onclick="mudarAba('monitor')" id="tab-monitor" class="side-btn shrink-0">
+        <span class="relative flex h-2 w-2 mr-1"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-merces-red opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-merces-red"></span></span>
+        Monitor ao Vivo
+      </button>
+      <button onclick="mudarAba('historico')" id="tab-historico" class="side-btn shrink-0"><i data-ic="bar-chart-2" class="ic"></i> Relatórios</button>
+      <button onclick="mudarAba('supervisor')" id="tab-supervisor" class="side-btn shrink-0"><i data-ic="shield" class="ic"></i> Supervisor</button>
+      <button onclick="solicitarSenhaConfig()" id="tab-config" class="side-btn shrink-0"><i data-ic="settings" class="ic"></i> Configurações</button>
+    </nav>
+    
+    <div class="hidden lg:block relative h-40 mt-auto overflow-hidden opacity-50 border-t border-red-900/30">
+      <div class="absolute inset-0 bg-gradient-to-t from-[#050506] to-transparent z-10"></div>
+      <p class="absolute bottom-4 left-4 z-20 text-xs font-bold text-slate-300 italic leading-tight drop-shadow-md">Controle total<br>do seu estoque,<br>em tempo real.</p>
+    </div>
+  </aside>
+
+  <div class="flex-1 min-w-0 flex flex-col bg-[#050506]">
+    <div id="hero" class="hero no-print">
+      <div id="topbar" class="hero-content flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-8 py-4 border-b border-white/5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/50 border border-red-500/50 flex items-center justify-center text-merces-red text-xl shadow-[0_0_10px_rgba(225,29,72,0.3)]"><i data-ic="user"></i></div>
+          <div>
+            <p class="font-bold text-white text-sm sm:text-base leading-tight">Olá, <span id="nome-saudacao">Operador</span></p>
+            <p class="text-[11px] sm:text-xs text-slate-400">Bem-vindo ao sistema Mercês Empreendimentos</p>
+          </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
+          <div class="flex items-center gap-2 bg-black/60 border border-red-900/40 rounded-lg px-3 py-1.5 backdrop-blur">
+            <span class="text-merces-red text-lg"><i data-ic="calendar"></i></span>
+            <div class="leading-tight"><p id="data-top" class="text-xs sm:text-sm font-semibold text-white">--/--/----</p><p id="dia-top" class="text-[9px] sm:text-[10px] text-slate-400">-</p></div>
+          </div>
+          <div class="flex items-center gap-2 bg-black/60 border border-red-900/40 rounded-lg px-3 py-1.5 backdrop-blur">
+            <span class="text-merces-red text-lg"><i data-ic="clock"></i></span>
+            <div class="leading-tight flex flex-col">
+              <span id="relogio" class="font-mono text-sm sm:text-base font-extrabold text-white">00:00:00</span>
+              <span id="status-conexao" class="text-[8px] sm:text-[9px] font-bold text-emerald-400 flex items-center gap-1"><span class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE</span>
+            </div>
+          </div>
+          <button onclick="location.reload()" class="ml-auto sm:ml-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-600/50 text-merces-red hover:bg-red-600 hover:text-white text-xs font-bold transition shadow-[0_0_10px_rgba(225,29,72,0.2)]">
+            <i data-ic="log-out"></i> Sair
+          </button>
+        </div>
+      </div>
+
+      <div id="banner" class="hero-content px-6 sm:px-12 pt-10 pb-12 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="text-center sm:text-left">
+          <h2 class="titulo-prata text-5xl sm:text-7xl tracking-tighter">MERCÊS</h2>
+          <p class="titulo-vermelho text-3xl sm:text-6xl tracking-tighter drop-shadow-[0_0_20px_rgba(225,29,72,0.8)]">EMPREENDIMENTOS</p>
+          <p class="mt-2 text-xs sm:text-base tracking-[.4em] text-slate-300 italic font-semibold">Gestão de Estoque Inteligente</p>
+        </div>
+        <p class="text-center sm:text-right text-lg sm:text-2xl font-bold italic text-white leading-tight drop-shadow-lg">
+          Mais controle.<br><span class="text-merces-red">Mais produtividade.</span>
+        </p>
+      </div>
+    </div>
+
+    <main class="max-w-[1600px] mx-auto w-full p-3 sm:p-6 flex-1 flex flex-col">
+
+      <!-- ABA 0: INÍCIO -->
+      <section id="aba-inicio" class="space-y-3 sm:space-y-5">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+          <div class="painel p-4 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <span class="w-12 h-12 rounded-lg border flex items-center justify-center text-2xl text-red-500 bg-red-950/40 border-red-800/50 shadow-[0_0_10px_rgba(225,29,72,0.2)]"><i data-ic="box" class="ic"></i></span>
+              <div><p id="d-total" class="text-2xl sm:text-3xl font-black text-white">0</p><p class="text-xs text-slate-400">Total de Itens</p></div>
+            </div>
+            <div class="flex justify-between items-end mt-2">
+              <span id="b-total" class="text-[10px] font-bold text-emerald-400">↑ +0%</span>
+              <svg id="sp-total" class="sparkline-svg text-red-600" viewBox="0 0 200 40" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+          <div class="painel p-4 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <span class="w-12 h-12 rounded-lg border flex items-center justify-center text-2xl text-emerald-400 bg-emerald-950/40 border-emerald-800/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]"><i data-ic="download" class="ic"></i></span>
+              <div><p id="d-entradas" class="text-2xl sm:text-3xl font-black text-white">0</p><p class="text-xs text-slate-400">Entradas</p></div>
+            </div>
+            <div class="flex justify-between items-end mt-2">
+              <span id="b-ent" class="text-[10px] font-bold text-emerald-400">↑ +0%</span>
+              <svg id="sp-ent" class="sparkline-svg text-emerald-500" viewBox="0 0 200 40" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+          <div class="painel p-4 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <span class="w-12 h-12 rounded-lg border flex items-center justify-center text-2xl text-orange-400 bg-orange-950/40 border-orange-800/50 shadow-[0_0_10px_rgba(249,115,22,0.2)]"><i data-ic="upload" class="ic"></i></span>
+              <div><p id="d-retiradas" class="text-2xl sm:text-3xl font-black text-white">0</p><p class="text-xs text-slate-400">Retiradas</p></div>
+            </div>
+            <div class="flex justify-between items-end mt-2">
+              <span id="b-ret" class="text-[10px] font-bold text-orange-400">↓ -0%</span>
+              <svg id="sp-ret" class="sparkline-svg text-orange-500" viewBox="0 0 200 40" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+          <div class="painel p-4 flex flex-col justify-between">
+            <div class="flex items-center gap-3">
+              <span class="w-12 h-12 rounded-lg border flex items-center justify-center text-2xl text-purple-400 bg-purple-950/40 border-purple-800/50 shadow-[0_0_10px_rgba(168,85,247,0.2)]"><i data-ic="bar-chart-2" class="ic"></i></span>
+              <div><p id="d-disp" class="text-2xl sm:text-3xl font-black text-white">100%</p><p class="text-xs text-slate-400">Disponibilidade</p></div>
+            </div>
+            <div class="h-1.5 rounded-full bg-dark-900 mt-3 overflow-hidden border border-dark-700">
+              <div id="d-disp-bar" class="h-full bg-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.8)]" style="width:100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-5">
+          <div class="painel p-4 sm:p-5 xl:col-span-2">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-white text-sm flex items-center gap-2"><span class="text-merces-red text-lg"><i data-ic="bar-chart-2"></i></span> Movimentações Recentes</h3>
+              <button onclick="mudarAba('historico')" class="text-xs font-semibold text-merces-red hover:text-red-400 transition flex items-center gap-1">Ver Histórico <i data-ic="arrow-right"></i></button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs min-w-[500px]">
+                <thead class="text-slate-400 border-b border-dark-700/50">
+                  <tr><th class="py-2 font-medium">Data / Hora</th><th class="font-medium">Produto</th><th class="font-medium">Tipo</th><th class="font-medium text-center">Qtd</th><th class="font-medium text-right">Operador</th></tr>
+                </thead>
+                <tbody id="d-recentes" class="divide-y divide-dark-700/30"></tbody>
+              </table>
+            </div>
+          </div>
+          
+          <div class="painel p-4 sm:p-5">
+            <h3 class="font-bold text-white text-sm mb-4 flex items-center gap-2"><span class="text-yellow-500 text-lg"><i data-ic="zap"></i></span> Ações Rápidas</h3>
+            <div class="grid grid-cols-2 gap-3 h-[calc(100%-2rem)]">
+              <button onclick="mudarAba('lancamento')" class="acao bg-gradient-to-b from-[#7f1d1d] to-[#2a0808] text-white flex flex-col justify-center items-center border-red-900/50 hover:border-red-500/50"><span class="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"><i data-ic="plus-circle"></i></span>Registrar<br>Entrada</button>
+              <button onclick="abrirModalRetirada()" class="acao bg-gradient-to-b from-[#9a3412] to-[#2a0e05] text-white flex flex-col justify-center items-center border-orange-900/50 hover:border-orange-500/50"><span class="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"><i data-ic="box"></i></span>Realizar<br>Retirada</button>
+              <button onclick="mudarAba('historico')" class="acao bg-gradient-to-b from-[#4c1d95] to-[#1e0a3c] text-white flex flex-col justify-center items-center border-purple-900/50 hover:border-purple-500/50"><span class="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"><i data-ic="bar-chart-2"></i></span>Ver<br>Relatórios</button>
+              <button onclick="mudarAba('supervisor')" class="acao bg-gradient-to-b from-[#334155] to-[#0f172a] text-white flex flex-col justify-center items-center border-slate-700/50 hover:border-slate-400/50"><span class="text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]"><i data-ic="shield"></i></span>Painel do<br>Supervisor</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-5">
+          <div class="painel p-4 sm:p-5">
+            <h3 class="font-bold text-white text-sm mb-4 flex items-center gap-2"><span class="text-merces-red text-lg"><i data-ic="pie-chart"></i></span> Estoque por Rua</h3>
+            <div class="flex items-center gap-6">
+              <div id="d-donut" class="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full shrink-0" style="background:#202028">
+                <div class="absolute inset-2 sm:inset-3 rounded-full bg-[#0a0a0d] border border-dark-700 flex items-center justify-center font-black text-white text-lg sm:text-2xl shadow-inner" id="d-donut-txt">0%</div>
+              </div>
+              <ul id="d-ruas" class="flex-1 space-y-2 text-xs sm:text-sm font-semibold"></ul>
+            </div>
+          </div>
+          <div class="painel p-4 sm:p-5">
+            <h3 class="font-bold text-white text-sm mb-4 flex items-center gap-2"><span class="text-merces-red text-lg"><i data-ic="calendar"></i></span> Resumo do Dia</h3>
+            <div class="grid grid-cols-2 gap-4 text-center h-full items-center">
+              <div class="border-r border-dark-700/50">
+                <p id="d-delta-ent" class="font-bold text-emerald-400 text-sm mb-1">↑ +0%</p>
+                <p class="text-[10px] text-slate-400 mb-1">Entradas do dia</p>
+                <p id="d-dia-ent" class="text-2xl font-black text-white">0</p>
+              </div>
+              <div>
+                <p id="d-delta-ret" class="font-bold text-red-400 text-sm mb-1">↓ -0%</p>
+                <p class="text-[10px] text-slate-400 mb-1">Retiradas do dia</p>
+                <p id="d-dia-ret" class="text-2xl font-black text-white">0</p>
+              </div>
+            </div>
+          </div>
+          <div class="painel p-4 sm:p-5">
+            <h3 class="font-bold text-white text-sm mb-4 flex items-center gap-2"><span class="text-emerald-500 text-lg"><i data-ic="check-circle"></i></span> Status do Sistema</h3>
+            <div class="flex items-center gap-4">
+              <div class="relative">
+                <div class="absolute inset-0 bg-emerald-500 blur-lg opacity-30 rounded-full"></div>
+                <span class="text-5xl text-emerald-400 relative z-10"><i data-ic="server"></i></span>
+              </div>
+              <div>
+                <p id="d-status" class="font-bold text-emerald-400 text-sm mb-1">Sistema Funcionando Normalmente</p>
+                <p class="text-[11px] text-slate-400" id="d-status-sub">Todos os módulos operacionais</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA SUPERVISOR -->
+      <section id="aba-supervisor" class="hidden max-w-2xl mx-auto w-full">
+        <div class="painel p-6 space-y-4">
+          <h2 class="text-xl font-black text-white"><i data-ic="shield" class="ic"></i> Painel do Supervisor</h2>
+          <p class="text-sm text-slate-400">Ações sensíveis pedem a senha de supervisor. Para excluir ou editar um lançamento, use Relatórios.</p>
+          <div class="grid sm:grid-cols-2 gap-3">
+            <button onclick="mudarAba('historico')" class="acao bg-dark-900 text-white"><span><i data-ic="edit" class="ic"></i></span>Editar / excluir lançamentos</button>
+            <button onclick="exportarCSV()" class="acao bg-dark-900 text-white"><span><i data-ic="download" class="ic"></i></span>Exportar Excel</button>
+            <button onclick="imprimirRelatorio()" class="acao bg-dark-900 text-white"><span><i data-ic="printer" class="ic"></i></span>Imprimir relatório</button>
+            <button onclick="solicitarSenhaZerar()" class="acao bg-red-950/70 text-red-300"><span><i data-ic="lock" class="ic"></i></span>Zerar toda a base</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA CONFIGURAÇÕES -->
+      <section id="aba-config" class="hidden max-w-4xl mx-auto w-full space-y-4">
+        <form onsubmit="salvarConfig(event)" class="painel p-6 space-y-4">
+          <h2 class="text-xl font-black text-white"><i data-ic="settings" class="ic"></i> Configurações</h2>
+          <div><label class="block text-xs font-bold text-slate-300 mb-1">Link da imagem de fundo do banner</label>
+            <input id="cfg-bg" type="url" placeholder="https://... (vazio = fundo.jpg ou fundo padrão)" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-white focus:border-merces-red outline-none"></div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">Nome na saudação</label>
+              <input id="cfg-nome" type="text" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-white focus:border-merces-red outline-none"></div>
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">Capacidade total (posições de palete)</label>
+              <input id="cfg-cap" type="number" min="1" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-white focus:border-merces-red outline-none"></div>
+          </div>
+          <button class="w-full py-3 rounded-xl bg-merces-red hover:bg-red-700 text-white font-extrabold text-sm">Salvar configurações</button>
+          <p id="cfg-ok" class="hidden text-sm text-emerald-400 text-center">Configurações salvas.</p>
+        </form>
+
+        <div class="painel p-6 space-y-4">
+          <div class="flex flex-wrap justify-between items-center gap-2">
+            <h2 class="text-xl font-black text-white">Integração Omie</h2>
+            <span id="omie-badge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-dark-800 text-slate-400">Verificando...</span>
+          </div>
+          <p class="text-sm text-slate-400">As chaves são enviadas uma única vez ao servidor (arquivo <b>omie.php</b>) e não ficam guardadas neste navegador. Os itens importados passam a aparecer como sugestão no campo Produto da Entrada.</p>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">APP_KEY</label>
+              <input id="omie-key" type="text" autocomplete="off" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-white font-mono focus:border-merces-red outline-none"></div>
+            <div><label class="block text-xs font-bold text-slate-300 mb-1">APP_SECRET</label>
+              <input id="omie-secret" type="password" autocomplete="new-password" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-white font-mono focus:border-merces-red outline-none"></div>
+          </div>
+          <div><label class="block text-xs font-bold text-slate-300 mb-1">Senha de supervisor</label>
+            <input id="omie-senha" type="password" autocomplete="off" placeholder="Obrigatória para salvar, testar e sincronizar" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-white focus:border-merces-red outline-none"></div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" id="omie-b1" onclick="omieAcao('salvar_config')" class="px-4 py-2.5 rounded-xl bg-merces-red hover:bg-red-700 text-white text-sm font-extrabold">Salvar chaves</button>
+            <button type="button" id="omie-b2" onclick="omieAcao('testar')" class="px-4 py-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-600 text-slate-200 text-sm font-bold">Testar conexão</button>
+            <button type="button" id="omie-b3" onclick="omieAcao('sincronizar')" class="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-bold">Sincronizar itens agora</button>
+          </div>
+          <p id="omie-msg" class="hidden text-sm"></p>
+
+          <div class="border-t border-dark-700 pt-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+              <p class="text-sm text-slate-300"><b id="omie-total">0</b> itens do Omie <span id="omie-quando" class="text-slate-500"></span></p>
+              <input id="omie-busca" oninput="renderOmie()" placeholder="Buscar por código ou descrição..." class="bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-merces-red outline-none">
+            </div>
+            <div class="overflow-auto max-h-96"><table class="w-full text-left text-sm min-w-[520px]">
+              <thead class="sticky top-0 bg-dark-900 text-slate-400 text-xs border-b border-dark-700"><tr><th class="py-2 px-2">Código</th><th class="px-2">Descrição</th><th class="px-2">Un.</th><th class="px-2 text-right">Preço</th><th class="px-2 text-right">Saldo Omie</th></tr></thead>
+              <tbody id="omie-tabela" class="divide-y divide-dark-700/50"></tbody>
+            </table></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 1: ENTRADA / LANÇAMENTO -->
+      <section id="aba-lancamento" class="hidden max-w-2xl mx-auto w-full my-auto">
+        <div class="painel p-6 sm:p-8 relative">
+          <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-transparent via-merces-red to-transparent"></div>
+          <div class="flex justify-between items-center mb-6 pb-4 border-b border-dark-700/60">
+            <div>
+              <h2 class="text-xl font-black text-white uppercase tracking-wide">Apontamento Físico (Entrada)</h2>
+              <p class="text-xs text-slate-400 mt-0.5">Identifique a rua, estante, vão e o número do palete</p>
+            </div>
+            <span class="text-xs font-mono font-bold bg-dark-950 px-3 py-1 rounded-lg border border-dark-700 text-slate-300">Terminal Rápido</span>
+          </div>
+
+          <form id="form-contagem" onsubmit="enviarContagem(event)" class="space-y-5">
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">1. Selecione a Rua</label>
+              <div class="grid grid-cols-4 gap-2.5">
+                <button type="button" onclick="setRua('A')" class="btn-rua py-3 rounded-xl font-black text-sm bg-dark-900 border border-dark-700 hover:border-merces-red text-slate-300 transition" data-rua="A">RUA A</button>
+                <button type="button" onclick="setRua('B')" class="btn-rua py-3 rounded-xl font-black text-sm bg-dark-900 border border-dark-700 hover:border-merces-red text-slate-300 transition" data-rua="B">RUA B</button>
+                <button type="button" onclick="setRua('C')" class="btn-rua py-3 rounded-xl font-black text-sm bg-dark-900 border border-dark-700 hover:border-merces-red text-slate-300 transition" data-rua="C">RUA C</button>
+                <button type="button" onclick="setRua('D')" class="btn-rua py-3 rounded-xl font-black text-sm bg-dark-900 border border-dark-700 hover:border-merces-red text-slate-300 transition" data-rua="D">RUA D</button>
+              </div>
+              <input type="hidden" id="input-rua" required>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">2. Estante</label>
+                <input type="text" id="input-estante" placeholder="Ex: 01, 14..." required class="w-full bg-dark-950/80 border border-dark-700 rounded-xl px-4 py-3 text-white font-semibold focus:border-merces-red outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">3. Palete (1 a 100)</label>
+                <select id="input-palete" required class="w-full bg-dark-950/80 border border-dark-700 rounded-xl px-4 py-3 text-white font-semibold focus:border-merces-red outline-none">
+                  <option value="">Selecione...</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Operador</label>
+                <input type="text" id="input-operador" placeholder="Seu nome" required class="w-full bg-dark-950/80 border border-dark-700 rounded-xl px-4 py-3 text-white font-semibold focus:border-merces-red outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">4. Vão da Prateleira (1 a 10)</label>
+              <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+                <button type="button" onclick="setVao(1)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="1">1</button>
+                <button type="button" onclick="setVao(2)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="2">2</button>
+                <button type="button" onclick="setVao(3)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="3">3</button>
+                <button type="button" onclick="setVao(4)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="4">4</button>
+                <button type="button" onclick="setVao(5)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="5">5</button>
+                <button type="button" onclick="setVao(6)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="6">6</button>
+                <button type="button" onclick="setVao(7)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="7">7</button>
+                <button type="button" onclick="setVao(8)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="8">8</button>
+                <button type="button" onclick="setVao(9)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="9">9</button>
+                <button type="button" onclick="setVao(10)" class="btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 transition" data-vao="10">10</button>
+              </div>
+              <input type="hidden" id="input-vao" required>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">5. Nome do Produto / SKU</label>
+                <input type="text" id="input-produto" list="lista-omie" placeholder="Nome ou código do item..." required class="w-full bg-dark-950/80 border border-dark-700 rounded-xl px-4 py-3 text-white font-semibold focus:border-merces-red outline-none">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">6. Quantidade</label>
+                <input type="number" id="input-quantidade" min="1" placeholder="Ex: 50" required class="w-full bg-dark-950/80 border border-dark-700 rounded-xl px-4 py-3 text-merces-red font-mono font-black text-xl focus:border-merces-red outline-none">
+              </div>
+            </div>
+
+            <button type="submit" id="btn-enviar" class="w-full py-4 rounded-xl bg-gradient-to-r from-red-800 to-red-600 hover:from-red-700 hover:to-red-500 text-white font-extrabold uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(225,29,72,0.4)] flex items-center justify-center gap-2 active:scale-[0.99] transition border border-red-500/50">
+              CONFIRMAR ENTRADA NO MONITOR ➔
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ABA 2: MONITOR AO VIVO (COM MODO SMART TV) -->
+      <section id="aba-monitor" class="hidden flex-1 flex flex-col space-y-4 sm:space-y-5">
+        <div id="tv-header" class="hidden items-center justify-between bg-[#0a0a0d] border border-red-900/50 rounded-2xl px-6 py-3 shadow-[0_0_25px_rgba(225,29,72,0.2)]">
+          <div class="flex items-center gap-4">
+            <img src="logo.png?v=2" alt="Mercês" class="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(225,29,72,0.6)]">
+            <div>
+              <h1 style="font-family:'Exo 2',sans-serif" class="text-2xl font-black italic text-white tracking-wider leading-none">MERCÊS <span class="text-merces-red">MONITOR TV</span></h1>
+              <p class="text-xs text-slate-400 font-semibold mt-0.5 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Atualização em Tempo Real (3s)
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-6">
+            <div class="text-right">
+              <div id="tv-relogio" class="font-mono text-3xl font-black text-white leading-none">00:00:00</div>
+              <div id="tv-data" class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">--/--/----</div>
+            </div>
+            <button onclick="toggleModoTV()" class="px-4 py-2.5 rounded-xl bg-red-950/80 hover:bg-red-600 text-white border border-red-500/50 font-black text-xs uppercase tracking-wider transition shadow-lg">
+              ✕ Sair do Modo TV (ESC)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 shrink-0">
+          <div class="painel p-5 relative overflow-hidden">
+            <div class="w-1.5 h-full bg-merces-red absolute left-0 top-0 shadow-[0_0_10px_rgba(225,29,72,0.8)]"></div>
+            <span class="text-xs uppercase font-extrabold text-slate-400">Total em Unidades</span>
+            <div id="mon-total-pecas" class="text-4xl sm:text-5xl font-mono font-black text-white mt-1">0</div>
+          </div>
+          <div class="painel p-5 relative overflow-hidden">
+            <div class="w-1.5 h-full bg-slate-500 absolute left-0 top-0"></div>
+            <span class="text-xs uppercase font-extrabold text-slate-400">Posições Ocupadas</span>
+            <div id="mon-total-lancamentos" class="text-4xl sm:text-5xl font-mono font-black text-slate-200 mt-1">0</div>
+          </div>
+          <div class="painel p-5 relative overflow-hidden">
+            <div class="w-1.5 h-full bg-merces-crimson absolute left-0 top-0 shadow-[0_0_10px_rgba(190,18,60,0.8)]"></div>
+            <span class="text-xs uppercase font-extrabold text-slate-400">Último Produto</span>
+            <div id="mon-ultimo-prod" class="text-lg sm:text-2xl font-black text-white mt-2 truncate">Nenhum</div>
+            <span id="mon-ultimo-qtd" class="text-sm text-merces-red font-mono font-bold">Qtd: 0</span>
+          </div>
+          <div class="painel p-5 relative overflow-hidden">
+            <div class="w-1.5 h-full bg-amber-500 absolute left-0 top-0"></div>
+            <span class="text-xs uppercase font-extrabold text-slate-400">Posição Recente</span>
+            <div id="mon-ultima-loc" class="text-base sm:text-xl font-bold text-amber-400 mt-2 truncate">-</div>
+          </div>
+        </div>
+
+        <div class="painel flex-1 flex flex-col p-5 overflow-hidden">
+          <div class="flex flex-col xl:flex-row xl:items-center justify-between pb-4 mb-3 border-b border-dark-700/70 gap-3 shrink-0">
+            <div class="flex items-center gap-3">
+              <span class="flex h-3 w-3 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-merces-red opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-merces-red shadow-[0_0_8px_rgba(225,29,72,0.8)]"></span>
+              </span>
+              <h3 class="text-base font-extrabold uppercase text-white">Transmissão em Tempo Real</h3>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button onclick="toggleSom()" id="btn-som" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-dark-900 border border-dark-700 text-slate-300 hover:border-slate-500 transition">🔊 Som: ON</button>
+              <button onclick="toggleAutoScroll()" id="btn-autoscroll" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-dark-900 border border-dark-700 text-slate-300 hover:border-slate-500 transition">🔄 Auto-Roll: OFF</button>
+              <button onclick="toggleModoTV()" id="btn-modo-tv" class="px-3 py-1.5 rounded-lg text-xs font-black bg-gradient-to-r from-red-700 to-merces-red text-white shadow-[0_0_12px_rgba(225,29,72,0.4)] hover:brightness-110 transition flex items-center gap-1.5">
+                📺 Modo Smart TV
+              </button>
+              <span class="text-xs font-bold text-slate-400 ml-2">Filtrar:</span>
+              <button onclick="filtrarMonitor('TODAS')" class="filtro-btn px-2.5 py-1 rounded-md text-xs font-black bg-merces-red text-white shadow-[0_0_10px_rgba(225,29,72,0.4)]" data-filtro="TODAS">TODAS</button>
+              <button onclick="filtrarMonitor('A')" class="filtro-btn px-2.5 py-1 rounded-md text-xs font-black bg-dark-900 border border-dark-700 text-slate-400" data-filtro="A">RUA A</button>
+              <button onclick="filtrarMonitor('B')" class="filtro-btn px-2.5 py-1 rounded-md text-xs font-black bg-dark-900 border border-dark-700 text-slate-400" data-filtro="B">RUA B</button>
+              <button onclick="filtrarMonitor('C')" class="filtro-btn px-2.5 py-1 rounded-md text-xs font-black bg-dark-900 border border-dark-700 text-slate-400" data-filtro="C">RUA C</button>
+              <button onclick="filtrarMonitor('D')" class="filtro-btn px-2.5 py-1 rounded-md text-xs font-black bg-dark-900 border border-dark-700 text-slate-400" data-filtro="D">RUA D</button>
+            </div>
+          </div>
+          <div id="container-tabela-monitor" class="overflow-y-auto max-h-[500px] flex-1">
+            <table class="w-full text-left text-sm border-collapse min-w-[600px]">
+              <thead class="sticky top-0 bg-[#0a0a0d]/95 text-slate-400 text-xs uppercase border-b border-dark-700 z-10 backdrop-blur">
+                <tr>
+                  <th class="py-3 px-3 font-medium">Horário</th>
+                  <th class="py-3 px-3 font-medium">Endereçamento & Palete</th>
+                  <th class="py-3 px-3 font-medium">Produto</th>
+                  <th class="py-3 px-3 text-right font-medium">Saldo Omie</th>
+                  <th class="py-3 px-3 text-right font-medium">Quantidade</th>
+                  <th class="py-3 px-3 text-right font-medium">Operador</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-monitor" class="divide-y divide-dark-700/30"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABA 3: RELATÓRIOS & AUDITORIA -->
+      <section id="aba-historico" class="hidden flex-1 flex flex-col space-y-4">
+        <div class="painel p-6 flex-1 flex flex-col">
+          <div id="print-cabecalho" class="hidden mb-6 pb-4 border-b-2 border-black">
+            <div class="flex justify-between items-start">
+              <div>
+                <h1 class="text-2xl font-black uppercase text-black">MERCÊS ESTOQUE</h1>
+                <h2 class="text-sm font-bold text-gray-700 uppercase">Relatório Oficial de Inventário Físico</h2>
+              </div>
+              <div class="text-right text-xs">
+                <p><strong>Emissão:</strong> <span id="print-data-emissao">-</span></p>
+                <p><strong>Total de Unidades:</strong> <span id="print-total-unidades">0</span></p>
+                <p><strong>Total de Lançamentos:</strong> <span id="print-total-linhas">0</span></p>
+              </div>
+            </div>
+          </div>
+
+          <div class="no-print flex flex-col sm:flex-row flex-wrap justify-between items-start sm:items-center pb-4 mb-4 border-b border-dark-700/70 gap-3">
+            <div>
+              <h2 class="text-xl font-black text-white uppercase">Gestão da Base de Dados</h2>
+              <p class="text-xs text-slate-400">Audite, pesquise, exporte ou imprima as contagens</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <input type="text" id="input-busca-historico" oninput="buscarHistorico()" placeholder="🔍 Buscar produto ou operador..." class="w-full sm:w-auto bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-merces-red outline-none flex-1">
+              <button onclick="imprimirRelatorio()" class="bg-dark-800 hover:bg-dark-700 text-slate-200 border border-dark-600 px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 transition"><i data-ic="printer"></i> Imprimir</button>
+              <button onclick="exportarCSV()" class="bg-merces-red hover:bg-red-700 text-white px-4 py-2 rounded-xl text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 transition shadow-lg shadow-merces-red/20"><i data-ic="download"></i> Exportar Excel</button>
+              <button onclick="solicitarSenhaZerar()" class="bg-dark-900 hover:bg-red-950 text-red-400 border border-red-900/50 px-4 py-2 rounded-xl text-xs font-bold uppercase transition flex items-center gap-1.5"><i data-ic="lock"></i> Zerar</button>
+            </div>
+          </div>
+
+          <div class="overflow-y-auto max-h-[500px]">
+            <table class="w-full text-left text-sm border-collapse min-w-[650px]">
+              <thead class="sticky top-0 bg-[#0a0a0d] text-slate-400 text-xs uppercase border-b border-dark-700 z-10">
+                <tr>
+                  <th class="py-3 px-3 font-medium">Data / Hora</th>
+                  <th class="py-3 px-3 font-medium">Endereço</th>
+                  <th class="py-3 px-3 font-medium">Palete</th>
+                  <th class="py-3 px-3 font-medium">Produto</th>
+                  <th class="py-3 px-3 text-right font-medium">Qtd</th>
+                  <th class="py-3 px-3 text-right font-medium">Operador</th>
+                  <th class="py-3 px-3 text-center no-print col-acoes font-medium">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="tabela-historico" class="divide-y divide-dark-700/30"></tbody>
+            </table>
+          </div>
+
+          <div id="print-assinaturas" class="hidden justify-between mt-12 pt-8 border-t border-gray-400 text-center text-xs">
+            <div class="w-5/12 border-t border-black pt-2">
+              <p class="font-bold">Responsável pela Contagem</p>
+              <p class="text-gray-600">Assinatura do Operador</p>
+            </div>
+            <div class="w-5/12 border-t border-black pt-2">
+              <p class="font-bold">Supervisor / Auditoria</p>
+              <p class="text-gray-600">Visto de Validação do Estoque</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- MODAIS -->
+    <div id="modal-retirada" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 no-print">
+      <div class="painel max-w-xl w-full p-4 sm:p-6 shadow-2xl relative max-h-[95vh] overflow-y-auto">
+        <div class="flex justify-between items-center pb-3 mb-4 border-b border-dark-700">
+          <div class="flex items-center gap-2">
+            <span class="text-amber-400 text-lg">📦</span>
+            <div>
+              <h3 class="text-sm sm:text-lg font-black text-white uppercase tracking-wider">Baixa / Retirada</h3>
+              <p class="text-[10px] sm:text-xs text-slate-400">Localize o item e reduza direto da posição física</p>
+            </div>
+          </div>
+          <button onclick="fecharModalRetirada()" class="text-slate-400 hover:text-white font-bold text-xl">&times;</button>
+        </div>
+        <div class="mb-4">
+          <label class="block text-[11px] sm:text-xs font-bold text-slate-300 uppercase mb-1">Buscar Produto ou Código SKU</label>
+          <input type="text" id="busca-retirada" oninput="pesquisarItemParaRetirada()" placeholder="Digite o nome do produto..." autofocus class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-white font-semibold focus:border-amber-400 outline-none">
+        </div>
+        <div id="lista-posicoes-retirada" class="space-y-2 max-h-56 overflow-y-auto mb-4 pr-1">
+          <p class="text-xs text-slate-500 text-center py-4">Digite o nome do produto acima para ver os paletes disponíveis.</p>
+        </div>
+        <form id="form-confirmar-retirada" onsubmit="executarBaixa(event)" class="hidden border-t border-dark-700 pt-4 space-y-4">
+          <input type="hidden" id="retirada-id-alvo">
+          <div class="p-3 rounded-xl bg-dark-950 border border-dark-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+              <span class="text-[10px] uppercase font-bold text-slate-400 block">Posição Selecionada:</span>
+              <span id="retirada-info-local" class="text-sm font-extrabold text-white">Rua A • Est. 01</span>
+            </div>
+            <div class="text-left sm:text-right">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block">Saldo Disponível:</span>
+              <span id="retirada-saldo-disponivel" class="text-base font-mono font-black text-emerald-400">0 un</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Qtd a Retirar</label>
+              <input type="number" id="retirada-quantidade" min="1" required placeholder="Ex: 5" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-amber-400 font-mono font-black text-xl focus:border-amber-400 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Quem está retirando?</label>
+              <input type="text" id="retirada-operador" required placeholder="Seu nome" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-white font-semibold focus:border-amber-400 outline-none">
+            </div>
+          </div>
+          <div class="flex gap-2 pt-2">
+            <button type="button" onclick="cancelarSelecaoRetirada()" class="w-1/3 py-3 rounded-xl bg-dark-800 text-slate-300 font-bold text-xs uppercase">Voltar</button>
+            <button type="submit" id="btn-confirmar-baixa" class="w-2/3 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-black font-black text-xs uppercase tracking-wider transition shadow-lg shadow-amber-500/20">Confirmar Saída ➔</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="modal-edicao" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 sm:p-4 no-print">
+      <div class="painel max-w-lg w-full p-4 sm:p-6 shadow-2xl relative max-h-[95vh] overflow-y-auto">
+        <div class="flex justify-between items-center pb-3 mb-4 border-b border-dark-700">
+          <h3 class="text-base sm:text-lg font-black text-white uppercase flex items-center gap-2">✏️ Editar Lançamento</h3>
+          <button onclick="fecharModalEdicao()" class="text-slate-400 hover:text-white font-bold text-lg">&times;</button>
+        </div>
+        <form id="form-edicao" onsubmit="salvarEdicao(event)" class="space-y-4">
+          <input type="hidden" id="edit-id">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            <div>
+              <label class="block text-[10px] sm:text-xs font-bold text-slate-300 uppercase mb-1">Rua</label>
+              <select id="edit-rua" class="w-full bg-dark-950 border border-dark-700 rounded-lg p-2.5 text-white font-bold text-sm">
+                <option value="A">RUA A</option><option value="B">RUA B</option><option value="C">RUA C</option><option value="D">RUA D</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] sm:text-xs font-bold text-slate-300 uppercase mb-1">Estante</label>
+              <input type="text" id="edit-estante" required class="w-full bg-dark-950 border border-dark-700 rounded-lg p-2.5 text-white text-sm font-semibold">
+            </div>
+            <div>
+              <label class="block text-[10px] sm:text-xs font-bold text-slate-300 uppercase mb-1">Vão</label>
+              <select id="edit-vao" class="w-full bg-dark-950 border border-dark-700 rounded-lg p-2.5 text-white font-bold text-sm">
+                <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[10px] sm:text-xs font-bold text-slate-300 uppercase mb-1">Palete</label>
+              <select id="edit-palete" class="w-full bg-dark-950 border border-dark-700 rounded-lg p-2.5 text-white font-bold text-sm"></select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Produto</label>
+            <input type="text" id="edit-produto" required class="w-full bg-dark-950 border border-dark-700 rounded-lg p-2.5 text-white text-sm font-semibold">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Quantidade</label>
+              <input type="number" id="edit-quantidade" min="1" required class="w-full bg-dark-950 border border-dark-700 rounded-lg p-2.5 text-merces-red font-mono font-black text-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-300 uppercase mb-1">Operador</label>
+              <input type="text" id="edit-operador" required class="w-full bg-dark-950 border border-dark-700 rounded-lg p-2.5 text-white text-sm font-semibold">
+            </div>
+          </div>
+          <div class="flex gap-2 pt-3 border-t border-dark-700">
+            <button type="button" onclick="fecharModalEdicao()" class="w-1/2 py-2.5 rounded-xl bg-dark-800 text-slate-300 font-bold text-xs uppercase">Cancelar</button>
+            <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-merces-red text-white font-black text-xs uppercase shadow-lg shadow-merces-red/20">Salvar Alteração</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="modal-senha" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 no-print">
+      <div class="painel max-w-sm w-full p-6 shadow-2xl border-red-900/60">
+        <div class="text-center mb-4">
+          <div class="w-12 h-12 bg-red-950 text-merces-red border border-red-800 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl shadow-[0_0_15px_rgba(225,29,72,0.3)]">🔒</div>
+          <h3 class="text-base font-black text-white uppercase">Acesso de Supervisor</h3>
+          <p class="text-xs text-slate-400 mt-1" id="texto-acao-senha">Digite a senha para autorizar</p>
+        </div>
+        <form onsubmit="confirmarSenha(event)" class="space-y-4">
+          <input type="password" id="campo-senha-super" placeholder="Senha" required class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-3 text-center text-white tracking-widest text-lg font-mono focus:border-merces-red outline-none">
+          <p id="msg-erro-senha" class="text-xs text-red-400 font-bold text-center hidden">Senha incorreta!</p>
+          <div class="flex gap-2">
+            <button type="button" onclick="fecharModalSenha()" class="w-1/2 py-2.5 rounded-xl bg-dark-800 text-slate-300 font-bold text-xs uppercase">Cancelar</button>
+            <button type="submit" id="btn-autorizar-senha" class="w-1/2 py-2.5 rounded-xl bg-merces-red text-white font-black text-xs uppercase">Autorizar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <datalist id="lista-omie"></datalist>
+    <footer id="barra-status" class="border-t border-red-900/30 bg-[#08080a] py-2.5 px-4 flex flex-col sm:flex-row justify-between gap-2 text-[10px] sm:text-xs text-slate-400 no-print">
+      <span><span class="inline-block w-2 h-2 rounded-full bg-emerald-400 mr-1.5 shadow-[0_0_5px_rgba(16,185,129,0.8)]"></span><span class="text-emerald-400 font-semibold">Sistema Online</span> | Última atualização: <span id="ultima-att">-</span></span>
+      <span><b class="text-slate-200">Mercês Empreendimentos</b> — <i>Sempre ao seu lado!</i></span>
+    </footer>
+  </div>
+    <script>
+  // === CONEXÃO DIRETA ONLINE COM O FIREBASE (PERMITE RODAR EM APK SEM ERRO 403) ===
+    const FIREBASE_DB = 'https://merces-expedicao-default-rtdb.firebaseio.com/estoque.json';
+    const SENHA_APP = '1234';
+    const fetchOriginal = window.fetch.bind(window);
+
+    window.fetch = async function(url, options = {}) {
+      if (String(url).includes('api.php')) {
+        try {
+          if (!options.method || options.method === 'GET') {
+            const r = await fetchOriginal(FIREBASE_DB, { cache: 'no-store' });
+            const d = await r.json();
+            const lista = Array.isArray(d) ? d.filter(Boolean) : (d ? Object.values(d) : []);
+            return new Response(JSON.stringify(lista), { status: 200 });
+          }
+          if (options.method === 'POST') {
+            const input = JSON.parse(options.body || '{}');
+            const acao = input.acao || 'salvar';
+            if (['excluir', 'zerar', 'validar_senha'].includes(acao)) {
+              if (String(input.senha || '') !== SENHA_APP) {
+                return new Response(JSON.stringify({ status: 'erro', mensagem: 'Senha incorreta!' }), { status: 401 });
+              }
+              if (acao === 'validar_senha') return new Response(JSON.stringify({ status: 'sucesso' }), { status: 200 });
+            }
+            const rAtual = await fetchOriginal(FIREBASE_DB, { cache: 'no-store' });
+            const dAtual = await rAtual.json();
+            let dados = Array.isArray(dAtual) ? dAtual.filter(Boolean) : (dAtual ? Object.values(dAtual) : []);
+
+            if (acao === 'salvar') {
+              delete input.acao;
+              dados.unshift(input);
+            } else if (acao === 'editar') {
+              dados = dados.map(i => String(i.id) === String(input.id) ? { ...i, ...input } : i);
+            } else if (acao === 'retirar') {
+              const idx = dados.findIndex(i => String(i.id) === String(input.id));
+              if (idx === -1) return new Response(JSON.stringify({ status: 'erro', mensagem: 'Item não encontrado' }), { status: 404 });
+              if (Number(input.quantidade_retirada) > Number(dados[idx].quantidade)) {
+                return new Response(JSON.stringify({ status: 'erro', mensagem: 'Saldo insuficiente!' }), { status: 400 });
+              }
+              dados[idx].quantidade = Number(dados[idx].quantidade) - Number(input.quantidade_retirada);
+              if (dados[idx].quantidade <= 0) dados.splice(idx, 1);
+            } else if (acao === 'excluir') {
+              dados = dados.filter(i => String(i.id) !== String(input.id));
+            } else if (acao === 'zerar') {
+              dados = [];
+            }
+
+            await fetchOriginal(FIREBASE_DB, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(dados)
+            });
+            return new Response(JSON.stringify({ status: 'sucesso', dados }), { status: 200 });
+          }
+        } catch (err) {
+          return fetchOriginal(url, options);
+        }
+      }
+      return fetchOriginal(url, options);
+    };  
+    let contagens = [];
+    let ultimoIdRecebido = null;
+    let filtroRuaAtual = 'TODAS';
+    let somAtivado = true;
+    let acaoPendente = null;
+    let sincronizando = false;
+    let audioContext = null;
+    let itemSelecionadoParaBaixa = null;
+    let modoTVAtivo = false;
+    let autoScrollAtivo = false;
+    let intervaloAutoScroll = null;
+    let direcaoScroll = 1;
+
+    function escaparHTML(texto) {
+      if (texto === null || texto === undefined) return '';
+      const div = document.createElement('div');
+      div.innerText = String(texto);
+      return div.innerHTML;
+    }
+
+    function getAudioContext() {
+      if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioContext.state === 'suspended') audioContext.resume();
+      return audioContext;
+    }
+
+    document.addEventListener('click', () => {
+      if (audioContext && audioContext.state === 'suspended') audioContext.resume();
+    }, { once: true });
+
+    function carregarOpcoesPalete() {
+      const selectLancar = document.getElementById('input-palete');
+      const selectEditar = document.getElementById('edit-palete');
+      const fragment1 = document.createDocumentFragment();
+      const fragment2 = document.createDocumentFragment();
+      for (let i = 1; i <= 100; i++) {
+        const opt1 = document.createElement('option'); opt1.value = i; opt1.textContent = `Palete ${i}`; fragment1.appendChild(opt1);
+        const opt2 = document.createElement('option'); opt2.value = i; opt2.textContent = `Palete ${i}`; fragment2.appendChild(opt2);
+      }
+      selectLancar.appendChild(fragment1);
+      selectEditar.appendChild(fragment2);
+    }
+    carregarOpcoesPalete();
+
+    setInterval(() => {
+      const agora = new Date();
+      const horaStr = agora.toLocaleTimeString('pt-BR');
+      const relogio = document.getElementById('relogio');
+      const tvRelogio = document.getElementById('tv-relogio');
+      const tvData = document.getElementById('tv-data');
+      if (relogio) relogio.innerText = horaStr;
+      if (tvRelogio) tvRelogio.innerText = horaStr;
+      if (tvData) tvData.innerText = agora.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+    }, 1000);
+
+    function mudarAba(aba) {
+      ['inicio','lancamento','monitor','historico','supervisor','config'].forEach(a => {
+        document.getElementById('aba-' + a).classList.toggle('hidden', a !== aba);
+        const b = document.getElementById('tab-' + a);
+        if (b) b.classList.toggle('ativo', a === aba);
+      });
+      document.getElementById('banner').classList.toggle('hidden', aba !== 'inicio');
+      document.getElementById('hero').classList.toggle('com-img', aba === 'inicio');
+      window.scrollTo(0, 0);
+    }
+
+    function setRua(letra) {
+      document.getElementById('input-rua').value = letra;
+      document.querySelectorAll('.btn-rua').forEach(btn => {
+        btn.className = btn.dataset.rua === letra 
+          ? 'btn-rua py-3 rounded-xl font-black text-sm bg-merces-red text-white border border-red-400 shadow-[0_0_10px_rgba(225,29,72,0.5)] transition'
+          : 'btn-rua py-3 rounded-xl font-black text-sm bg-dark-900 border border-dark-700 text-slate-300 transition';
+      });
+    }
+
+    function setVao(num) {
+      document.getElementById('input-vao').value = num;
+      document.querySelectorAll('.btn-vao').forEach(btn => {
+        btn.className = btn.dataset.vao == num
+          ? 'btn-vao py-2 rounded-lg font-black text-xs bg-merces-red text-white border border-red-400 shadow-[0_0_10px_rgba(225,29,72,0.5)] transition'
+          : 'btn-vao py-2 rounded-lg font-black text-xs bg-dark-900 border border-dark-700 text-slate-300 transition';
+      });
+    }
+
+    function toggleSom() {
+      somAtivado = !somAtivado;
+      document.getElementById('btn-som').innerText = somAtivado ? '🔊 Som: ON' : '🔇 Som: OFF';
+    }
+
+    function tocarBeep() {
+      if (!somAtivado) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        osc.start(); osc.stop(ctx.currentTime + 0.15);
+      } catch(e) {}
+    }
+
+    function toggleModoTV() {
+      modoTVAtivo = !modoTVAtivo;
+      document.body.classList.toggle('modo-tv', modoTVAtivo);
+      if (modoTVAtivo) {
+        mudarAba('monitor');
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+        if (!autoScrollAtivo) toggleAutoScroll();
+        sincronizarServidor();
+      } else {
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        if (autoScrollAtivo) toggleAutoScroll();
+      }
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement && modoTVAtivo) {
+        modoTVAtivo = false;
+        document.body.classList.remove('modo-tv');
+        if (autoScrollAtivo) toggleAutoScroll();
+      }
+    });
+
+    function toggleAutoScroll() {
+      autoScrollAtivo = !autoScrollAtivo;
+      const btn = document.getElementById('btn-autoscroll');
+      if (btn) {
+        btn.innerText = autoScrollAtivo ? '🔄 Auto-Roll: ON' : '🔄 Auto-Roll: OFF';
+        btn.className = autoScrollAtivo
+          ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-950 border border-emerald-600 text-emerald-400 transition'
+          : 'px-3 py-1.5 rounded-lg text-xs font-bold bg-dark-900 border border-dark-700 text-slate-300 transition';
+      }
+      if (intervaloAutoScroll) clearInterval(intervaloAutoScroll);
+      if (autoScrollAtivo) {
+        intervaloAutoScroll = setInterval(() => {
+          const box = document.getElementById('container-tabela-monitor');
+          if (!box || box.scrollHeight <= box.clientHeight) return;
+          box.scrollTop += direcaoScroll * 1;
+          if (box.scrollTop + box.clientHeight >= box.scrollHeight - 2) direcaoScroll = -1;
+          else if (box.scrollTop <= 0) direcaoScroll = 1;
+        }, 40);
+      }
+    }
+
+    function filtrarMonitor(rua) {
+      filtroRuaAtual = rua;
+      document.querySelectorAll('.filtro-btn').forEach(btn => {
+        btn.className = btn.dataset.filtro === rua 
+          ? 'filtro-btn px-2.5 py-1 rounded-md text-xs font-black bg-merces-red text-white shadow-[0_0_10px_rgba(225,29,72,0.4)]'
+          : 'filtro-btn px-2.5 py-1 rounded-md text-xs font-black bg-dark-900 border border-dark-700 text-slate-400';
+      });
+      renderizarInterface(false);
+    }
+
+    function obterDadosLocais() {
+      try { const s = localStorage.getItem('merces_dados_inventario'); return s ? JSON.parse(s) : []; } catch (e) { return []; }
+    }
+    function salvarDadosLocais(d) {
+      try { localStorage.setItem('merces_dados_inventario', JSON.stringify(d)); } catch (e) {}
+    }
+
+    async function sincronizarServidor() {
+      if (sincronizando) return;
+      sincronizando = true;
+      try {
+        const resp = await fetch('api.php', { cache: 'no-store' });
+        if (!resp.ok) throw new Error('Falha HTTP');
+        const dados = await resp.json();
+        let temItemNovo = false;
+        if (Array.isArray(dados) && dados.length > 0) {
+          if (ultimoIdRecebido && String(dados[0].id) !== String(ultimoIdRecebido)) {
+            temItemNovo = true; tocarBeep();
+          }
+          ultimoIdRecebido = String(dados[0].id);
+        }
+        contagens = Array.isArray(dados) ? dados : [];
+        salvarDadosLocais(contagens);
+        renderizarInterface(temItemNovo);
+        const statusEl = document.getElementById('status-conexao');
+        statusEl.innerHTML = '<span class="w-1 h-1 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE';
+        statusEl.className = 'text-[8px] sm:text-[9px] font-bold text-emerald-400 flex items-center gap-1';
+      } catch (e) {
+        contagens = obterDadosLocais();
+        renderizarInterface(false);
+        const statusEl = document.getElementById('status-conexao');
+        statusEl.innerHTML = '<span class="w-1 h-1 rounded-full bg-amber-400"></span> LOCAL';
+        statusEl.className = 'text-[8px] sm:text-[9px] font-bold text-amber-400 flex items-center gap-1';
+      } finally { sincronizando = false; }
+    }
+
+    async function enviarContagem(e) {
+      e.preventDefault();
+      const rua = document.getElementById('input-rua').value;
+      const vao = document.getElementById('input-vao').value;
+      const palete = document.getElementById('input-palete').value;
+      if (!rua || !vao) { alert('Selecione a Rua e o Vão!'); return; }
+      if (!palete) { alert('Selecione o Palete de 1 a 100!'); return; }
+
+      const btnEnviar = document.getElementById('btn-enviar');
+      btnEnviar.disabled = true; btnEnviar.innerText = 'ENVIANDO...';
+
+      const novo = {
+        acao: 'salvar', id: String(Date.now() + Math.floor(Math.random() * 100)),
+        data: new Date().toLocaleDateString('pt-BR'), hora: new Date().toLocaleTimeString('pt-BR'),
+        rua: rua, estante: document.getElementById('input-estante').value.trim(),
+        vao: vao, palete: parseInt(palete, 10),
+        produto: document.getElementById('input-produto').value.trim(),
+        quantidade: Math.max(1, parseInt(document.getElementById('input-quantidade').value, 10) || 1),
+        operador: document.getElementById('input-operador').value.trim()
+      };
+
+      try {
+        const resp = await fetch('api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novo) });
+        if (!resp.ok) throw new Error('Erro na requisição');
+      } catch(err) {
+        const l = obterDadosLocais(); l.unshift(novo); salvarDadosLocais(l);
+      } finally {
+        btnEnviar.disabled = false; btnEnviar.innerText = 'CONFIRMAR ENTRADA NO MONITOR ➔';
+      }
+
+      try { localStorage.setItem('merces_operador', novo.operador); } catch(e) {}
+      document.getElementById('input-produto').value = '';
+      document.getElementById('input-quantidade').value = '';
+      document.getElementById('input-produto').focus();
+      sincronizarServidor();
+    }
+
+    function abrirModalRetirada() {
+      document.getElementById('modal-retirada').classList.remove('hidden');
+      document.getElementById('busca-retirada').value = '';
+      document.getElementById('busca-retirada').focus();
+      cancelarSelecaoRetirada();
+      pesquisarItemParaRetirada();
+    }
+    function fecharModalRetirada() { document.getElementById('modal-retirada').classList.add('hidden'); }
+    function cancelarSelecaoRetirada() {
+      itemSelecionadoParaBaixa = null;
+      document.getElementById('form-confirmar-retirada').classList.add('hidden');
+      document.getElementById('lista-posicoes-retirada').classList.remove('hidden');
+    }
+
+    function pesquisarItemParaRetirada() {
+      const termo = document.getElementById('busca-retirada').value.toLowerCase().trim();
+      const container = document.getElementById('lista-posicoes-retirada');
+      if (!termo) { container.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">Digite o nome do produto acima para ver os paletes disponíveis.</p>'; return; }
+      const resultados = contagens.filter(c => Number(c.quantidade) > 0 && String(c.produto).toLowerCase().includes(termo));
+      if (resultados.length === 0) { container.innerHTML = '<p class="text-xs text-red-400 font-bold text-center py-4">Nenhum palete com saldo encontrado para este produto.</p>'; return; }
+      
+      container.innerHTML = '';
+      resultados.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded-xl bg-dark-950 border border-dark-700 hover:border-amber-400 cursor-pointer transition flex flex-col sm:flex-row justify-between items-start sm:items-center group gap-2';
+        card.onclick = () => selecionarItemParaBaixa(item);
+        card.innerHTML = `
+          <div>
+            <span class="text-sm font-black text-white block group-hover:text-amber-400 transition">${escaparHTML(item.produto)}</span>
+            <span class="text-[10px] text-slate-400">Rua <strong class="text-slate-200">${escaparHTML(item.rua)}</strong> • Est. <strong class="text-slate-200">${escaparHTML(item.estante)}</strong> • Vão <strong class="text-slate-200">${escaparHTML(item.vao)}</strong> • Palete <strong class="text-amber-400">${escaparHTML(item.palete || '-')}</strong></span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] text-slate-400 block font-bold">Disponível:</span>
+            <span class="text-base font-mono font-black text-emerald-400">${Number(item.quantidade).toLocaleString('pt-BR')} un</span>
+          </div>`;
+        container.appendChild(card);
+      });
+    }
+
+    function selecionarItemParaBaixa(item) {
+      itemSelecionadoParaBaixa = item;
+      document.getElementById('lista-posicoes-retirada').classList.add('hidden');
+      document.getElementById('form-confirmar-retirada').classList.remove('hidden');
+      document.getElementById('retirada-id-alvo').value = item.id;
+      document.getElementById('retirada-info-local').innerText = `${item.produto} (Rua ${item.rua} • Est.${item.estante} • Vão ${item.vao} • Palete ${item.palete || '-'})`;
+      document.getElementById('retirada-saldo-disponivel').innerText = `${Number(item.quantidade).toLocaleString('pt-BR')} un`;
+      const campoQtd = document.getElementById('retirada-quantidade');
+      campoQtd.max = item.quantidade; campoQtd.value = ''; campoQtd.focus();
+    }
+
+    async function executarBaixa(e) {
+      e.preventDefault();
+      const idAlvo = document.getElementById('retirada-id-alvo').value;
+      const qtdRetirar = parseInt(document.getElementById('retirada-quantidade').value, 10);
+      const operador = document.getElementById('retirada-operador').value.trim();
+      if (!itemSelecionadoParaBaixa || qtdRetirar > itemSelecionadoParaBaixa.quantidade) { alert('Quantidade superior ao saldo disponível!'); return; }
+
+      const btnConfirmar = document.getElementById('btn-confirmar-baixa');
+      btnConfirmar.disabled = true; btnConfirmar.innerText = 'Processando...';
+      const payload = { acao: 'retirar', id: idAlvo, quantidade_retirada: qtdRetirar, operador: operador };
+
+      try {
+        const resp = await fetch('api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const res = await resp.json().catch(() => ({}));
+        if (!resp.ok || res.status === 'erro') { alert(res.mensagem || 'Erro ao processar baixa.'); return; }
+        registrarRetirada(itemSelecionadoParaBaixa.produto, qtdRetirar, operador);
+        fecharModalRetirada();
+        sincronizarServidor();
+      } catch (err) { alert('Erro de comunicação com o servidor.'); } 
+      finally { btnConfirmar.disabled = false; btnConfirmar.innerText = 'Confirmar Saída ➔'; }
+    }
+
+    function abrirModalEdicao(id) {
+      const item = contagens.find(c => String(c.id) === String(id));
+      if (!item) return;
+      document.getElementById('edit-id').value = item.id;
+      document.getElementById('edit-rua').value = item.rua;
+      document.getElementById('edit-estante').value = item.estante;
+      document.getElementById('edit-vao').value = item.vao;
+      document.getElementById('edit-palete').value = item.palete || 1;
+      document.getElementById('edit-produto').value = item.produto;
+      document.getElementById('edit-quantidade').value = item.quantidade;
+      document.getElementById('edit-operador').value = item.operador;
+      document.getElementById('modal-edicao').classList.remove('hidden');
+    }
+    function fecharModalEdicao() { document.getElementById('modal-edicao').classList.add('hidden'); }
+
+    async function salvarEdicao(e) {
+      e.preventDefault();
+      const id = String(document.getElementById('edit-id').value);
+      const itemAtualizado = {
+        acao: 'editar', id: id,
+        rua: document.getElementById('edit-rua').value,
+        estante: document.getElementById('edit-estante').value.trim(),
+        vao: document.getElementById('edit-vao').value,
+        palete: parseInt(document.getElementById('edit-palete').value, 10),
+        produto: document.getElementById('edit-produto').value.trim(),
+        quantidade: Math.max(1, parseInt(document.getElementById('edit-quantidade').value, 10) || 1),
+        operador: document.getElementById('edit-operador').value.trim()
+      };
+
+      try {
+        const resp = await fetch('api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(itemAtualizado) });
+        if (!resp.ok) throw new Error('Erro na edição');
+      } catch(err) {
+        let l = obterDadosLocais();
+        l = l.map(i => String(i.id) === id ? { ...i, ...itemAtualizado } : i);
+        salvarDadosLocais(l);
+      }
+      fecharModalEdicao(); sincronizarServidor();
+    }
+
+    function solicitarSenhaConfig() {
+      acaoPendente = { tipo: 'config' };
+      document.getElementById('texto-acao-senha').innerText = 'Digite a senha para ACESSAR AS CONFIGURAÇÕES:';
+      document.getElementById('msg-erro-senha').classList.add('hidden');
+      document.getElementById('campo-senha-super').value = '';
+      document.getElementById('modal-senha').classList.remove('hidden');
+      setTimeout(() => document.getElementById('campo-senha-super').focus(), 100);
+    }
+
+    function solicitarSenhaZerar() {
+      acaoPendente = { tipo: 'zerar' };
+      document.getElementById('texto-acao-senha').innerText = 'Digite a senha para ZERAR TODA A BASE:';
+      document.getElementById('msg-erro-senha').classList.add('hidden');
+      document.getElementById('campo-senha-super').value = '';
+      document.getElementById('modal-senha').classList.remove('hidden');
+      setTimeout(() => document.getElementById('campo-senha-super').focus(), 100);
+    }
+    
+    function solicitarSenhaExcluir(id) {
+      acaoPendente = { tipo: 'excluir', id: String(id) };
+      document.getElementById('texto-acao-senha').innerText = 'Digite a senha para EXCLUIR ESTE ITEM:';
+      document.getElementById('msg-erro-senha').classList.add('hidden');
+      document.getElementById('campo-senha-super').value = '';
+      document.getElementById('modal-senha').classList.remove('hidden');
+      setTimeout(() => document.getElementById('campo-senha-super').focus(), 100);
+    }
+    
+    function fecharModalSenha() { document.getElementById('modal-senha').classList.add('hidden'); acaoPendente = null; }
+
+    async function confirmarSenha(e) {
+      e.preventDefault();
+      const digitada = document.getElementById('campo-senha-super').value;
+      const acaoAtual = acaoPendente;
+      const erroMsg = document.getElementById('msg-erro-senha');
+      const btnAutorizar = document.getElementById('btn-autorizar-senha');
+      erroMsg.classList.add('hidden'); btnAutorizar.disabled = true; btnAutorizar.innerText = 'Validando...';
+      
+      const payload = { acao: acaoAtual.tipo === 'config' ? 'validar_senha' : acaoAtual.tipo, senha: digitada };
+      if (acaoAtual.tipo === 'excluir') payload.id = acaoAtual.id;
+
+      try {
+        const resp = await fetch('api.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const res = await resp.json().catch(() => ({}));
+        if (!resp.ok || res.status === 'erro') {
+          erroMsg.innerText = res.mensagem || 'Senha incorreta!'; erroMsg.classList.remove('hidden'); return;
+        }
+        fecharModalSenha(); 
+        if (acaoAtual.tipo === 'config') mudarAba('config');
+        else sincronizarServidor();
+      } catch (err) {
+        erroMsg.innerText = 'Erro ao conectar ao servidor.'; erroMsg.classList.remove('hidden');
+      } finally { btnAutorizar.disabled = false; btnAutorizar.innerText = 'Autorizar'; }
+    }
+
+    function exportarCSV() {
+      if (contagens.length === 0) return alert('Sem dados para exportar.');
+      let csv = 'Data;Hora;Rua;Estante;Vao;Palete;Produto;Quantidade;Operador\n';
+      contagens.forEach(c => {
+        const prod = String(c.produto || '').replace(/"/g, '""');
+        const op = String(c.operador || '').replace(/"/g, '""');
+        csv += `${c.data};${c.hora};${c.rua};${c.estante};${c.vao};${c.palete || '-'};"${prod}";${c.quantidade};"${op}"\n`;
+      });
+      const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `merces_estoque_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+    }
+
+    function imprimirRelatorio() {
+      if (contagens.length === 0) return alert('Não há dados para imprimir no momento.');
+      document.getElementById('print-data-emissao').innerText = `${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`;
+      let totalPecas = 0; contagens.forEach(c => totalPecas += Number(c.quantidade || 0));
+      document.getElementById('print-total-unidades').innerText = totalPecas.toLocaleString('pt-BR');
+      document.getElementById('print-total-linhas').innerText = contagens.length;
+      window.print();
+    }
+
+    function buscarHistorico() {
+      const termo = document.getElementById('input-busca-historico').value.toLowerCase().trim();
+      document.querySelectorAll('#tabela-historico tr').forEach(linha => {
+        linha.style.display = linha.innerText.toLowerCase().includes(termo) ? '' : 'none';
+      });
+    }
+
+    let omieIdx = null, omieIdxRef = null;
+    function omieItemDe(prod) {
+      if (typeof omieItens === 'undefined' || !omieItens.length) return undefined;
+      if (omieIdxRef !== omieItens) {
+        omieIdx = { cod: new Map(), desc: new Map() };
+        omieItens.forEach(i => { if (i.codigo) omieIdx.cod.set(String(i.codigo).trim().toLowerCase(), i); omieIdx.desc.set(String(i.descricao).trim().toLowerCase(), i); });
+        omieIdxRef = omieItens;
+      }
+      const t = String(prod || '').trim().toLowerCase();
+      let i = omieIdx.desc.get(t) || omieIdx.cod.get(t);
+      if (!i && t.includes(' - ')) i = omieIdx.cod.get(t.split(' - ')[0].trim()) || omieIdx.desc.get(t.split(' - ').slice(1).join(' - ').trim());
+      return i;
+    }
+    function omieSaldoDe(prod) { const i = omieItemDe(prod); return i ? i.saldo : undefined; }
+
+    const nomesAbertos = new Set();
+    function alternarNomeProduto(id) {
+      id = String(id);
+      nomesAbertos.has(id) ? nomesAbertos.delete(id) : nomesAbertos.add(id);
+      renderizarInterface(false);
+    }
+    function produtoCelula(item) {
+      const texto = String(item.produto || '');
+      const om = omieItemDe(texto);
+      const jaTemNome = om && texto.toLowerCase().includes(String(om.descricao).trim().toLowerCase());
+      if (!om || !om.descricao || jaTemNome) return escaparHTML(texto);
+      const aberto = nomesAbertos.has(String(item.id));
+      return `<button type="button" onclick="alternarNomeProduto('${escaparHTML(item.id)}')" title="${aberto ? 'Clique para esconder o nome' : 'Clique para ver o nome do produto'}" class="text-left font-black text-white underline decoration-dotted decoration-slate-500 underline-offset-4 hover:text-amber-400 transition">${escaparHTML(texto)}</button>`
+        + (aberto ? `<span class="block text-xs font-semibold text-emerald-300 mt-0.5">${escaparHTML(om.descricao)}</span>` : '');
+    }
+
+    function saldoOmieCelula(prod) {
+      const sd = omieSaldoDe(prod);
+      const temCatalogo = typeof omieItens !== 'undefined' && omieItens.length;
+      if (sd === undefined) return temCatalogo ? '<span class="text-slate-600" title="Item não encontrado no Omie">—</span>' : '';
+      if (sd === null) return '<span class="text-slate-500" title="Saldo do Omie indisponível">—</span>';
+      return `<span class="font-mono font-black text-emerald-400 text-sm sm:text-base" title="Saldo no Omie">${Number(sd).toLocaleString('pt-BR')}</span>`;
+    }
+
+    function renderizarInterface(animar = false) {
+      let totalPecas = 0;
+      contagens.forEach(c => totalPecas += Number(c.quantidade || 0));
+      document.getElementById('mon-total-pecas').innerText = totalPecas.toLocaleString('pt-BR');
+      document.getElementById('mon-total-lancamentos').innerText = contagens.length;
+
+      if (contagens.length > 0) {
+        const u = contagens[0];
+        document.getElementById('mon-ultimo-prod').innerText = u.produto;
+        document.getElementById('mon-ultimo-qtd').innerText = `Qtd: ${u.quantidade} un`;
+        document.getElementById('mon-ultima-loc').innerText = `Rua ${u.rua} • Est. ${u.estante} • Vão ${u.vao} • Palete ${u.palete || '-'}`;
+      } else {
+        document.getElementById('mon-ultimo-prod').innerText = 'Nenhum';
+        document.getElementById('mon-ultimo-qtd').innerText = 'Qtd: 0';
+        document.getElementById('mon-ultima-loc').innerText = '-';
+      }
+
+      const tbodyMon = document.getElementById('tabela-monitor');
+      tbodyMon.innerHTML = '';
+      const filtrados = filtroRuaAtual === 'TODAS' ? contagens : contagens.filter(c => c.rua === filtroRuaAtual);
+
+      filtrados.forEach((item, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = (animar && idx === 0) ? 'linha-animada hover:bg-dark-800/50 transition' : 'hover:bg-dark-800/50 transition';
+        tr.innerHTML = `
+          <td class="py-3 px-3 font-mono text-xs text-slate-400">${escaparHTML(item.hora)}</td>
+          <td class="py-3 px-3">
+            <span class="inline-flex items-center gap-1.5 bg-dark-950 border border-dark-700 px-2 py-0.5 rounded-md text-xs">
+              <span class="font-black text-merces-red">RUA ${escaparHTML(item.rua)}</span><span class="text-dark-600">|</span>
+              <span class="text-slate-300 font-bold">E.${escaparHTML(item.estante)}</span><span class="text-dark-600">|</span>
+              <span class="text-white font-extrabold bg-dark-800 px-1.5 rounded">V.${escaparHTML(item.vao)}</span><span class="text-dark-600">|</span>
+              <span class="text-amber-400 font-bold">P.${escaparHTML(item.palete || '-')}</span>
+            </span>
+          </td>
+          <td class="py-3 px-3 font-black text-white text-sm">${produtoCelula(item)}</td>
+          <td class="py-3 px-3 text-right">${saldoOmieCelula(item.produto)}</td>
+          <td class="py-3 px-3 text-right font-mono font-black text-merces-red text-base">${Number(item.quantidade || 0).toLocaleString('pt-BR')}</td>
+          <td class="py-3 px-3 text-right text-xs font-semibold text-slate-400">${escaparHTML(item.operador)}</td>`;
+        tbodyMon.appendChild(tr);
+      });
+
+      const tbodyHist = document.getElementById('tabela-historico');
+      tbodyHist.innerHTML = '';
+      contagens.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-dark-800/40 transition';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 text-xs text-slate-400 font-mono">${escaparHTML(item.data)} ${escaparHTML(item.hora)}</td>
+          <td class="py-2.5 px-3 text-xs font-bold text-slate-300">Rua ${escaparHTML(item.rua)} | Est.${escaparHTML(item.estante)} | Vão ${escaparHTML(item.vao)}</td>
+          <td class="py-2.5 px-3 text-xs font-black text-amber-400 font-mono">Palete ${escaparHTML(item.palete || '-')}</td>
+          <td class="py-2.5 px-3 font-bold text-white text-sm">${escaparHTML(item.produto)}</td>
+          <td class="py-2.5 px-3 text-right font-mono font-bold text-merces-red">${Number(item.quantidade || 0).toLocaleString('pt-BR')}</td>
+          <td class="py-2.5 px-3 text-right text-xs text-slate-400">${escaparHTML(item.operador)}</td>
+          <td class="py-2.5 px-3 text-center no-print col-acoes">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="abrirModalEdicao('${escaparHTML(item.id)}')" class="px-2.5 py-1 rounded bg-dark-800 hover:bg-dark-700 text-slate-200 border border-dark-600 font-bold text-xs transition">✏️ Editar</button>
+              <button onclick="solicitarSenhaExcluir('${escaparHTML(item.id)}')" class="px-2.5 py-1 rounded bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800/60 font-bold text-xs transition">🗑️ Excluir</button>
+            </div>
+          </td>`;
+        tbodyHist.appendChild(tr);
+      });
+
+      const termo = document.getElementById('input-busca-historico')?.value;
+      if (termo) buscarHistorico();
+      renderizarDashboard();
+    }
+
+    const hojeStr = () => new Date().toLocaleDateString('pt-BR');
+    const ontemStr = () => new Date(Date.now() - 864e5).toLocaleDateString('pt-BR');
+    function lerLS(k, pad) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : pad; } catch (e) { return pad; } }
+    function registrarRetirada(produto, qtd, op) {
+      const m = lerLS('merces_retiradas', []);
+      m.unshift({ produto, quantidade: Number(qtd), operador: op, data: hojeStr(), hora: new Date().toLocaleTimeString('pt-BR') });
+      try { localStorage.setItem('merces_retiradas', JSON.stringify(m.slice(0, 500))); localStorage.setItem('merces_operador', op); } catch (e) {}
+    }
+    function paraData(d, h) { const [dd, mm, aa] = String(d).split('/'); return new Date(`${aa}-${mm}-${dd}T${h || '00:00:00'}`).getTime() || 0; }
+    
+    function sparkline(id, vals) {
+      const el = document.getElementById(id); if (!el) return;
+      const v = vals.length > 1 ? vals : [0, 0];
+      const max = Math.max(...v, 1), min = Math.min(...v);
+      const pts = v.map((n, i) => `${(i / (v.length - 1)) * 200},${36 - ((n - min) / ((max - min) || 1)) * 30}`).join(' ');
+      el.innerHTML = `<polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>`;
+    }
+    function delta(hoje, ontem) { if (!ontem) return '—'; const p = Math.round((hoje - ontem) / ontem * 100); return (p >= 0 ? '↑ +' : '↓ ') + p + '%'; }
+    const somaQtd = a => a.reduce((t, c) => t + Number(c.quantidade || 0), 0);
+
+    function renderizarDashboard() {
+      const ret = lerLS('merces_retiradas', []);
+      const cfg = lerLS('merces_cfg', {});
+      const cap = Number(cfg.cap) || 400;
+      const entHoje = somaQtd(contagens.filter(c => c.data === hojeStr()));
+      const entOntem = somaQtd(contagens.filter(c => c.data === ontemStr()));
+      const retHoje = somaQtd(ret.filter(r => r.data === hojeStr()));
+      const retOntem = somaQtd(ret.filter(r => r.data === ontemStr()));
+      const set = (id, t) => { const e = document.getElementById(id); if (e) e.innerText = t; };
+
+      set('d-total', somaQtd(contagens).toLocaleString('pt-BR'));
+      set('d-entradas', entHoje.toLocaleString('pt-BR'));
+      set('d-retiradas', retHoje.toLocaleString('pt-BR'));
+      set('d-dia-ent', entHoje.toLocaleString('pt-BR'));
+      set('d-dia-ret', retHoje.toLocaleString('pt-BR'));
+      set('d-delta-ent', delta(entHoje, entOntem));
+      set('d-delta-ret', delta(retHoje, retOntem));
+      set('b-ent', entHoje ? delta(entHoje, entOntem) : ''); set('b-ret', retHoje ? delta(retHoje, retOntem) : '');
+      const totQ = somaQtd(contagens); set('b-total', totQ ? delta(totQ + (retHoje - entHoje), totQ) : '');
+
+      const ocupadas = new Set(contagens.filter(c => Number(c.quantidade) > 0).map(c => [c.rua, c.estante, c.vao, c.palete].join('|'))).size;
+      const disp = Math.max(0, Math.min(100, 100 - ocupadas / cap * 100));
+      set('d-disp', disp.toFixed(1).replace('.', ',') + '%');
+      document.getElementById('d-disp-bar').style.width = disp + '%';
+
+      sparkline('sp-total', contagens.slice(0, 12).map(c => Number(c.quantidade || 0)).reverse());
+      sparkline('sp-ent', contagens.slice(0, 12).map(c => Number(c.quantidade || 0)).reverse());
+      sparkline('sp-ret', ret.slice(0, 12).map(r => r.quantidade).reverse());
+
+      const mov = contagens.map(c => ({ ...c, tipo: 'Entrada' })).concat(ret.map(r => ({ ...r, tipo: 'Retirada' })))
+        .sort((a, b) => paraData(b.data, b.hora) - paraData(a.data, a.hora)).slice(0, 5);
+      const tb = document.getElementById('d-recentes'); tb.innerHTML = '';
+      if (!mov.length) tb.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">Nenhuma movimentação ainda.</td></tr>';
+      mov.forEach(m => {
+        const ent = m.tipo === 'Entrada';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="py-3 px-2 font-mono text-[10px] sm:text-xs text-slate-400">${escaparHTML(m.data)} ${escaparHTML(String(m.hora).slice(0, 5))}</td>
+          <td class="px-2 font-semibold text-slate-200 text-xs sm:text-sm">${escaparHTML(m.produto)}</td>
+          <td class="px-2"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold text-white ${ent ? 'bg-emerald-600' : 'bg-red-600'} shadow-sm">${m.tipo}</span></td>
+          <td class="px-2 font-mono font-bold text-xs ${ent ? 'text-emerald-400' : 'text-red-400'}">${ent ? '+' : '-'}${Number(m.quantidade || 0).toLocaleString('pt-BR')}</td>
+          <td class="px-2 text-slate-400 text-xs sm:text-sm text-right">${escaparHTML(m.operador)}</td>`;
+        tb.appendChild(tr);
+      });
+
+      const cores = { A: '#e11d48', B: '#3b82f6', C: '#f97316', D: '#8b5cf6' };
+      const tot = somaQtd(contagens);
+      const porRua = ['A', 'B', 'C', 'D'].map(r => ({ r, q: somaQtd(contagens.filter(c => c.rua === r)) }));
+      let acc = 0, grad = [];
+      porRua.forEach(p => { const pc = tot ? p.q / tot * 100 : 0; grad.push(`${cores[p.r]} ${acc}% ${acc + pc}%`); acc += pc; });
+      document.getElementById('d-donut').style.background = tot ? `conic-gradient(${grad.join(',')})` : '#202028';
+      const maior = porRua.reduce((a, b) => b.q > a.q ? b : a, porRua[0]);
+      set('d-donut-txt', (tot ? Math.round(maior.q / tot * 100) : 0) + '%');
+      document.getElementById('d-ruas').innerHTML = porRua.map(p => `<li class="flex items-center justify-between"><span class="flex items-center gap-2 text-slate-300"><i class="w-2.5 h-2.5 rounded-full inline-block" style="background:${cores[p.r]}"></i>Rua ${p.r}</span><b class="text-white">${tot ? Math.round(p.q / tot * 100) : 0}%</b></li>`).join('');
+
+      const n = new Date();
+      set('ultima-att', n.toLocaleDateString('pt-BR') + ' às ' + n.toLocaleTimeString('pt-BR').slice(0, 5));
+    }
+
+    function atualizarStatusCard() {
+      const online = (document.getElementById('status-conexao').innerText || '').includes('ONLINE');
+      const st = document.getElementById('d-status');
+      st.innerText = online ? 'Sistema Funcionando Normalmente' : 'Sem conexão com o servidor';
+      st.className = 'font-bold text-xs sm:text-sm ' + (online ? 'text-emerald-400' : 'text-amber-400');
+      document.getElementById('d-status-sub').innerText = online ? 'Todos os módulos operacionais' : 'Usando dados salvos neste aparelho';
+    }
+
+    function aplicarConfig() {
+      const cfg = lerLS('merces_cfg', {});
+      const bg = (cfg.bg || '').trim();
+      const defaultBg = 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop';
+      document.documentElement.style.setProperty('--bg-img', `url("${bg || defaultBg}")`);
+      let nome = cfg.nome; try { nome = nome || localStorage.getItem('merces_operador'); } catch (e) {}
+      document.getElementById('nome-saudacao').innerText = nome || 'Operador';
+      document.getElementById('cfg-bg').value = cfg.bg || '';
+      document.getElementById('cfg-nome').value = cfg.nome || '';
+      document.getElementById('cfg-cap').value = cfg.cap || 400;
+    }
+    function salvarConfig(e) {
+      e.preventDefault();
+      const cfg = { bg: document.getElementById('cfg-bg').value.trim(), nome: document.getElementById('cfg-nome').value.trim(), cap: Number(document.getElementById('cfg-cap').value) || 400 };
+      try { localStorage.setItem('merces_cfg', JSON.stringify(cfg)); } catch (err) {}
+      aplicarConfig(); renderizarDashboard();
+      const ok = document.getElementById('cfg-ok'); ok.classList.remove('hidden'); setTimeout(() => ok.classList.add('hidden'), 2500);
+    }
+    function atualizarDataTopo() {
+      const d = new Date();
+      document.getElementById('data-top').innerText = d.toLocaleDateString('pt-BR');
+      const dia = d.toLocaleDateString('pt-BR', { weekday: 'long' });
+      document.getElementById('dia-top').innerText = dia.charAt(0).toUpperCase() + dia.slice(1);
+    }
+
+    const ICONES = {
+      'home':'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z|M9 22V12h6v10',
+      'plus-square':'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z|M12 8v8|M8 12h8',
+      'plus-circle':'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z|M12 8v8|M8 12h8',
+      'box':'M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z|M3.27 6.96L12 12.01l8.73-5.05|M12 22.08V12',
+      'bar-chart-2':'M18 20V10|M12 20V4|M6 20v-6',
+      'pie-chart':'M21.21 15.89A10 10 0 1 1 8 2.83|M22 12A10 10 0 0 0 12 2v10z',
+      'shield':'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+      'settings':'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z|M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z',
+      'user':'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2|M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
+      'download':'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4|M7 10l5 5 5-5|M12 15V3',
+      'upload':'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4|M17 8l-5-5-5 5|M12 3v12',
+      'calendar':'M3 4h18v18H3z|M16 2v4|M8 2v4|M3 10h18',
+      'clock':'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z|M12 6v6l4 2',
+      'check-circle':'M22 11.08V12a10 10 0 1 1-5.93-9.14|M22 4L12 14.01l-3-3',
+      'server':'M2 2h20v8H2z|M2 14h20v8H2z|M6 6h.01|M6 18h.01',
+      'zap':'M13 2L3 14h9l-1 8 10-12h-9l1-8z',
+      'printer':'M6 9V2h12v7|M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2|M6 14h12v8H6z',
+      'edit':'M12 20h9|M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z',
+      'lock':'M5 11h14v10H5z|M7 11V7a5 5 0 0 1 10 0v4',
+      'log-out':'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4|M16 17l5-5-5-5|M21 12H9',
+      'arrow-right':'M5 12h14|M12 5l7 7-7 7'
+    };
+    document.querySelectorAll('i[data-ic]').forEach(el => {
+      const p = (ICONES[el.dataset.ic] || '').split('|').map(d => `<path d="${d}"/>`).join('');
+      el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+      if (!el.classList.contains('ic')) el.classList.add('ic');
+    });
+
+    let omieItens = [];
+    const brl = n => Number(n || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    function omieMsg(t, ok) {
+      const el = document.getElementById('omie-msg'); if (!el) return;
+      el.innerText = t; el.className = 'text-sm ' + (ok ? 'text-emerald-400' : 'text-red-400');
+    }
+    function omieBadge(cfg) {
+      const b = document.getElementById('omie-badge'); if (!b) return;
+      b.innerText = cfg ? 'Conectado (' + (cfg.chave || 'chave salva') + ')' : 'Não configurado';
+      b.className = 'text-xs font-bold px-2.5 py-1 rounded-full ' + (cfg ? 'bg-emerald-950 text-emerald-400' : 'bg-dark-800 text-slate-400');
+    }
+   async function omieCarregar() {
+      try {
+        const st = await (await fetch('omie.php?acao=status', { cache: 'no-store' })).json();
+        omieBadge(st.configurado ? st : null);
+        const j = await (await fetch('omie.php?acao=itens', { cache: 'no-store' })).json();
+        omieItens = Array.isArray(j.itens) ? j.itens : [];
+        document.getElementById('omie-quando').innerText = j.atualizado ? '· atualizado em ' + j.atualizado : '';
+      } catch (e) {
+        omieItens = [];
+        omieBadge(null);
+        document.getElementById('omie-badge').innerText = 'omie.php não encontrado';
+      }
+      renderOmie();
+      preencherSugestoesOmie();
+      if (typeof renderizarInterface === 'function' && Array.isArray(contagens)) renderizarInterface(false);
+    }
+
+    function renderOmie() {
+      const termo = (document.getElementById('omie-busca').value || '').toLowerCase().trim();
+      const lista = termo ? omieItens.filter(i => (i.codigo + ' ' + i.descricao).toLowerCase().includes(termo)) : omieItens;
+      document.getElementById('omie-total').innerText = omieItens.length.toLocaleString('pt-BR');
+      const tb = document.getElementById('omie-tabela');
+      tb.innerHTML = '';
+      if (!lista.length) {
+        tb.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">' + (omieItens.length ? 'Nenhum item encontrado.' : 'Nenhum item importado.') + '</td></tr>';
+        return;
+      }
+      lista.slice(0, 300).forEach(i => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="py-2 px-2 font-mono text-xs text-slate-300">${escaparHTML(i.codigo)}</td><td class="px-2 text-white">${escaparHTML(i.descricao)}</td><td class="px-2 text-slate-400">${escaparHTML(i.unidade)}</td><td class="px-2 text-right text-slate-300">${brl(i.preco)}</td><td class="px-2 text-right font-mono font-bold ${i.saldo === null ? 'text-slate-500' : 'text-emerald-400'}">${i.saldo === null ? '—' : Number(i.saldo).toLocaleString('pt-BR')}</td>`;
+        tb.appendChild(tr);
+      });
+    }
+
+    function preencherSugestoesOmie() {
+      const dl = document.getElementById('lista-omie');
+      if (!dl) return;
+      dl.innerHTML = '';
+      omieItens.slice(0, 3000).forEach(i => {
+        const o = document.createElement('option');
+        o.value = (i.codigo ? i.codigo + ' - ' : '') + i.descricao;
+        dl.appendChild(o);
+      });
+    }
+
+    async function omieAcao(acao) {
+      const senha = document.getElementById('omie-senha').value;
+      if (!senha) return omieMsg('Digite a senha de supervisor.', false);
+      const corpo = { acao, senha };
+      if (acao === 'salvar_config') {
+        corpo.app_key = document.getElementById('omie-key').value.trim();
+        corpo.app_secret = document.getElementById('omie-secret').value.trim();
+        if (!corpo.app_key || !corpo.app_secret) return omieMsg('Preencha APP_KEY e APP_SECRET.', false);
+      }
+      ['omie-b1', 'omie-b2', 'omie-b3'].forEach(id => document.getElementById(id).disabled = true);
+      omieMsg(acao === 'sincronizar' ? 'Importando itens... isso pode levar alguns segundos.' : 'Aguarde...', true);
+      try {
+        const r = await fetch('omie.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) });
+        const j = await r.json().catch(() => ({ status: 'erro', mensagem: 'Resposta inválida do servidor.' }));
+        if (!r.ok || j.status === 'erro') omieMsg(j.mensagem || 'Erro na operação.', false);
+        else {
+          omieMsg((j.mensagem || 'Concluído.'), !j.aviso);
+          if (acao === 'salvar_config') document.getElementById('omie-secret').value = '';
+          if (acao !== 'testar') await omieCarregar();
+        }
+      } catch (e) {
+        omieMsg('Não foi possível falar com omie.php.', false);
+      }
+      ['omie-b1', 'omie-b2', 'omie-b3'].forEach(id => document.getElementById(id).disabled = false);
+    }
+
+    omieCarregar();
+    setInterval(omieCarregar, 60000);
+    aplicarConfig();
+    atualizarDataTopo();
+    setInterval(atualizarDataTopo, 60000);
+    setInterval(atualizarStatusCard, 2000);
+    sincronizarServidor();
+
+    if (window.location.search.includes('tv=1')) {
+      mudarAba('monitor');
+      document.body.classList.add('modo-tv');
+      modoTVAtivo = true;
+      toggleAutoScroll();
+    }
+
+    setInterval(() => {
+      const monitorVisivel = !document.getElementById('aba-monitor').classList.contains('hidden');
+      if (modoTVAtivo || monitorVisivel) sincronizarServidor();
+    }, 3000);
+    setInterval(sincronizarServidor, 30000);
+  </script>
+</body>
+</html> 
